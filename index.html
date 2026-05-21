@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Troy Satchell — Portfolio</title>
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Manrope', 'sans-serif'],
+                    },
+                    colors: {
+                        page: '#f6f6f8',
+                        brand: {
+                            red: '#FF3B30',
+                            indigo: '#5E5CE6',
+                            green: '#34C759',
+                            orange: '#FF9500',
+                            blue: '#007AFF'
+                        }
+                    },
+                    boxShadow: {
+                        'card': '0 4px 40px -10px rgba(0,0,0,0.05)',
+                        'float': '0 20px 40px -15px rgba(0,0,0,0.1)',
+                        'inner-white': 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base Environment */
+        body {
+            background-color: theme('colors.page');
+            color: #111111;
+            /* Hide scrollbar for cleaner Awwwards aesthetic */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Reusable Card Base */
+        .bento-card {
+            background-color: white;
+            border-radius: 32px;
+            box-shadow: 0 4px 40px -10px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.03);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Stack overlapping trick */
+        .stack-col > *:not(:first-child) {
+            margin-top: -12px;
+        }
+
+        /* Phone Mockup Frame */
+        .phone-frame {
+            border: 8px solid #1C1C1E;
+            border-radius: 2.5rem;
+            background: #fff;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+        }
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 40%; height: 1.25rem;
+            background: #1C1C1E;
+            border-bottom-left-radius: 1rem;
+            border-bottom-right-radius: 1rem;
+            z-index: 50;
+        }
+
+        /* Smooth UI Utilities */
+        .pill-blur {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Bento-card hover lift */
+        .bento-card {
+            transition: transform 0.45s cubic-bezier(0.2,0.8,0.2,1),
+                        box-shadow 0.45s cubic-bezier(0.2,0.8,0.2,1),
+                        border-color 0.3s;
+        }
+        .bento-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 1px 0 rgba(15,15,20,0.04),
+                        0 2px 4px rgba(15,15,20,0.05),
+                        0 24px 50px -20px rgba(15,15,20,0.12);
+        }
+        .bento-card.no-lift:hover { transform: none; }
+
+        /* Selected-work fanned deck */
+        .deck-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; perspective: 1000px; }
+        .deck-ghost {
+            position: absolute;
+            width: 62%; aspect-ratio: 1014 / 647;
+            border-radius: 14px;
+            opacity: 0.45;
+            border: 1px solid rgba(15,15,20,0.04);
+            box-shadow: 0 14px 30px -14px rgba(15,15,20,0.1);
+            pointer-events: none;
+        }
+        .deck-card {
+            position: absolute;
+            width: 64%;
+            aspect-ratio: 1014 / 647;
+            transform-origin: center center;
+            transition: transform 0.55s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.4s;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid rgba(15,15,20,0.08);
+            text-decoration: none;
+            color: inherit;
+        }
+        .deck-card[data-front="true"] {
+            box-shadow: 0 30px 60px -20px rgba(15,15,20,0.22), 0 2px 4px rgba(15,15,20,0.06);
+            cursor: pointer;
+        }
+        .deck-card[data-front="false"] {
+            box-shadow: 0 20px 40px -16px rgba(15,15,20,0.16);
+            pointer-events: none;
+        }
+        .deck-chrome {
+            height: 24px;
+            background: #f6f6f8;
+            border-bottom: 1px solid #ececef;
+            display: flex; align-items: center;
+            padding: 0 9px; gap: 5px;
+            position: relative;
+        }
+        .deck-chrome .dot { width: 7px; height: 7px; border-radius: 999px; display: inline-block; }
+        .deck-url {
+            position: absolute; left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px; color: #9b9ba3;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            letter-spacing: 0.02em;
+        }
+        .deck-shot { width: 100%; height: calc(100% - 24px); overflow: hidden; background: #fff; }
+        .deck-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; }
+        .deck-arrow {
+            width: 32px; height: 32px; border-radius: 999px;
+            background: #fff; border: 1px solid #ececef;
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: #2a2a2f;
+            box-shadow: 0 2px 6px rgba(15,15,20,0.06);
+            transition: background 0.2s, transform 0.2s;
+            padding: 0;
+        }
+        .deck-arrow:hover { background: #fafafa; }
+        .deck-arrow:active { transform: scale(0.94); }
+
+        /* Selected-work: both projects visible (front + back), chevron swaps front */
+        .peek-cluster {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 64%;
+            /* aspect-ratio set inline per cluster to match native screenshot ratio */
+            transform-origin: center center;
+            transition: transform 0.55s cubic-bezier(0.2,0.8,0.2,1), z-index 0s;
+        }
+        .peek-cluster.is-active {
+            transform: translate(-50%, -50%) rotate(-2deg);
+            z-index: 3;
+        }
+        .peek-cluster:not(.is-active) {
+            transform: translate(-50%, -50%) translate(56px, -10px) rotate(8deg);
+            z-index: 2;
+        }
+        .peek-cluster .peek-1,
+        .peek-cluster .peek-2 {
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid rgba(15,15,20,0.08);
+            transform-origin: center center;
+            transition: transform 0.55s cubic-bezier(0.2,0.8,0.2,1),
+                        opacity 0.35s ease,
+                        box-shadow 0.4s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .peek-cluster .peek-1 {
+            z-index: 2;
+            box-shadow: 0 24px 50px -20px rgba(15,15,20,0.24), 0 2px 4px rgba(15,15,20,0.06);
+        }
+        .peek-cluster:not(.is-active) .peek-1 {
+            box-shadow: 0 18px 36px -16px rgba(15,15,20,0.18);
+        }
+        .peek-cluster .peek-2 {
+            z-index: 1;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(0) translateY(0) rotate(0);
+        }
+        /* Hover-peek only on the active (front) cluster */
+        .peek-cluster.is-active:hover .peek-1 {
+            transform: translateX(-32%) translateY(-4%) rotate(-7deg);
+        }
+        .peek-cluster.is-active:hover .peek-2 {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(42%) translateY(12%) rotate(10deg);
+            box-shadow: 0 28px 50px -18px rgba(15,15,20,0.24);
+        }
+        .peek-shot { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+        .peek-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; }
+
+        /* Cursor-follow background glow */
+        .cursor-glow {
+            position: fixed;
+            top: 0; left: 0;
+            width: 420px; height: 420px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 59, 48, 0.18) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            will-change: transform, left, top;
+        }
+        body:hover .cursor-glow { opacity: 1; }
+    </style>
+</head>
+<body class="min-h-[100dvh] pb-32">
+
+    <!-- Cursor-follow background glow -->
+    <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
+
+    <!-- Nav (Glass Pill) -->
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50">
+        <div class="pill-blur border border-black/5 shadow-float rounded-full px-2 py-2 flex items-center gap-1">
+            <a href="#" class="px-5 py-2 rounded-full bg-gray-100 text-sm font-semibold text-gray-900 transition-colors">Home</a>
+            <a href="#" class="px-5 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">About</a>
+            <a href="#" class="px-5 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors relative flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-red"></span>
+                Work
+            </a>
+            <a href="#" class="px-5 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Main Grid Architecture -->
+    <main class="max-w-[1280px] mx-auto px-6 pt-32 lg:pt-40">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- ================= LEFT COLUMN ================= -->
+            <div class="flex flex-col gap-5">
+
+                <!-- 1. Intro Text Card -->
+                <article class="bento-card p-10">
+                    <h1 class="text-2xl font-bold tracking-tight text-gray-900 mb-6">Troy is building Clavira.</h1>
+                    <div class="space-y-4 text-[15px] leading-relaxed text-gray-500 font-medium tracking-tight">
+                        <p>i design things.</p>
+                        <p>i think design can change things.</p>
+                        <p>i think the things we design are just as important as the things we choose not to.</p>
+                        <p>i think we should design things that do the things we don't enjoy, and make the things we do enjoy, even better.</p>
+                        <p>i think there are too many things.</p>
+                        <p>i think there should be fewer, but better things*.</p>
+                        <p class="pt-2 text-gray-400 text-sm italic">the best things. an optimal amount.</p>
+                    </div>
+                </article>
+
+                <!-- 2. Selected Work — chevron-cycle, hover-to-peek -->
+                <div id="selected-work" class="bento-card no-lift bg-[#F5F5F7] relative overflow-hidden" style="height: 520px;">
+                    <!-- Top labels -->
+                    <div class="absolute z-30 top-5 left-5 text-[10.5px] font-bold tracking-[0.1em] uppercase text-gray-400">Selected work</div>
+                    <div class="absolute z-30 top-5 right-5 text-[9.5px] font-bold tracking-[0.1em] uppercase text-gray-400" data-deck-counter>01 / 02</div>
+
+                    <!-- Stage -->
+                    <div class="absolute inset-0">
+                        <!-- ViaVienna -->
+                        <div class="peek-cluster is-active" data-project="viavienna" style="aspect-ratio: 1014 / 647;">
+                            <a class="peek-2" href="#" target="_blank" rel="noopener" aria-label="ViaVienna inside view">
+                                <div class="peek-shot">
+                                    <img src="./screenshots/ViaVienna2.png" alt="" loading="lazy" draggable="false">
+                                </div>
+                            </a>
+                            <a class="peek-1" href="#" target="_blank" rel="noopener" aria-label="ViaVienna">
+                                <div class="peek-shot">
+                                    <img src="./screenshots/ViaVIenna1.png" alt="ViaVienna" loading="lazy" draggable="false">
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Clavira -->
+                        <div class="peek-cluster" data-project="clavira" style="aspect-ratio: 1014 / 647;">
+                            <a class="peek-2" href="https://clavira.com" target="_blank" rel="noopener" aria-label="Clavira inside view">
+                                <div class="peek-shot">
+                                    <img src="./screenshots/Clavira2.png" alt="" loading="lazy" draggable="false">
+                                </div>
+                            </a>
+                            <a class="peek-1" href="https://clavira.com" target="_blank" rel="noopener" aria-label="Clavira">
+                                <div class="peek-shot">
+                                    <img src="./screenshots/Clavira1.png" alt="Clavira" loading="lazy" draggable="false">
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Bottom: name + tag + chevrons -->
+                    <div class="absolute left-0 right-0 bottom-0 px-5 py-4 flex items-center justify-between z-20" style="background: linear-gradient(0deg, #F5F5F7 70%, transparent);">
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-[15px] font-semibold text-gray-900 tracking-tight" data-deck-name>ViaVienna</span>
+                            <span class="text-[11.5px] text-gray-500" data-deck-tag>co-writing for trips</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="deck-arrow" data-deck-prev type="button" aria-label="Previous project">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                    <path d="M7.5 2.5L4 6l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <button class="deck-arrow" data-deck-next type="button" aria-label="Next project">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                    <path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <!-- ================= RIGHT COLUMN ================= -->
+            <div class="flex flex-col gap-5">
+
+                <!-- 1. My Stack -->
+                <div class="bento-card p-6 lg:p-8 flex flex-col gap-6">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10.5px] font-extrabold tracking-[0.1em] text-gray-400 uppercase">My stack</span>
+                        <span class="text-[11px] text-gray-500 inline-flex items-center gap-1.5">
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+                            what I reach for
+                        </span>
+                    </div>
+
+                    <!-- Layered stack rows -->
+                    <div class="flex flex-col gap-3.5">
+                        <div class="flex items-baseline gap-3">
+                            <span class="font-mono text-[10.5px] tracking-[0.06em] text-gray-400 min-w-[64px] pt-1">frontend</span>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">React</span>
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">Next.js</span>
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">TypeScript</span>
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">Tailwind</span>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-3">
+                            <span class="font-mono text-[10.5px] tracking-[0.06em] text-gray-400 min-w-[64px] pt-1">backend</span>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">Node</span>
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">Postgres</span>
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">Prisma</span>
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">tRPC</span>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-3">
+                            <span class="font-mono text-[10.5px] tracking-[0.06em] text-gray-400 min-w-[64px] pt-1">tools</span>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">Figma</span>
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">Linear</span>
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">Vercel</span>
+                                <span class="inline-block px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[12.5px] font-medium text-gray-700 -tracking-[0.005em]">Cursor</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Links Row -->
+                    <div class="mt-4 pt-6 border-t border-gray-100 flex items-center justify-center gap-3">
+                        <a href="https://www.linkedin.com/in/troyjsatchell/" target="_blank" rel="noopener" aria-label="LinkedIn" class="w-11 h-11 rounded-xl flex items-center justify-center bg-white border border-gray-200 shadow-sm transition-all hover:scale-105 hover:shadow-md hover:border-gray-300" style="color: #0A66C2;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </a>
+                        <a href="https://github.com/Troysaved" target="_blank" rel="noopener" aria-label="GitHub" class="w-11 h-11 rounded-xl flex items-center justify-center bg-white border border-gray-200 shadow-sm transition-all hover:scale-105 hover:shadow-md hover:border-gray-300" style="color: #181717;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+                            </svg>
+                        </a>
+                        <a href="https://x.com/troyschll" target="_blank" rel="noopener" aria-label="X / Twitter" class="w-11 h-11 rounded-xl flex items-center justify-center bg-white border border-gray-200 shadow-sm transition-all hover:scale-105 hover:shadow-md hover:border-gray-300" style="color: #000000;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                        </a>
+                        <a href="#" target="_blank" rel="noopener" aria-label="Substack" class="w-11 h-11 rounded-xl flex items-center justify-center bg-white border border-gray-200 shadow-sm transition-all hover:scale-105 hover:shadow-md hover:border-gray-300" style="color: #FF6719;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/>
+                            </svg>
+                        </a>
+                        <a href="https://clavira.com" target="_blank" rel="noopener" aria-label="Clavira" class="w-11 h-11 rounded-xl flex items-center justify-center bg-white border border-gray-200 shadow-sm transition-all hover:scale-105 hover:shadow-md hover:border-gray-300" style="color: #000000;">
+                            <svg width="20" height="22" viewBox="0 0 41.53 44.62" fill="currentColor" aria-hidden="true">
+                                <polygon points="39.93 12.2 34.75 42 29.22 43.83 39.93 12.2"/>
+                                <path d="M38.33,18.49l-4.02,23.14-2.81.93-1.48.49,8.31-24.55M41.53,5.91l-13.11,38.71c2.25-.75,4.51-1.49,6.76-2.24,2.12-12.16,4.23-24.32,6.35-36.47h0Z"/>
+                                <polygon points="22.14 6.36 34.37 42.07 28.89 43.94 22.14 6.36"/>
+                                <path d="M23.79,12.73l9.94,29.03-2.3.78-2.15.73-4.52-25.16-.97-5.39M20.49,0c2.67,14.87,5.34,29.73,8.01,44.6,2.17-.74,4.34-1.47,6.51-2.21L20.49,0h0Z"/>
+                                <polygon points="5.21 39.88 30.87 39.59 28.15 44.06 5.21 39.88"/>
+                                <path d="M29.98,40.1l-.18.3-1.88,3.1-13.53-2.46-3.96-.72,19.55-.22M31.77,39.08l-31.77.36c9.47,1.72,18.94,3.45,28.4,5.17,1.12-1.84,2.24-3.69,3.36-5.53h0Z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 2. Twitter Contact Card -->
+                <div class="bento-card p-8 flex flex-col justify-between">
+                    <div class="flex items-start justify-between">
+                        <div class="flex gap-4 items-center">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-sm" style="background: linear-gradient(135deg, #FF8A4C, #FF4F3D);">T</div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 leading-tight">Troy Satchell</h3>
+                                <div class="flex items-center gap-1 text-gray-500 text-sm mt-0.5 font-medium">
+                                    <span>@troyschll</span>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="https://x.com/troyschll" target="_blank" rel="noopener" aria-label="X / Twitter" class="text-gray-500 hover:text-gray-900 transition-colors">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <p class="mt-6 text-[15px] text-gray-700 font-medium leading-relaxed max-w-[90%]">
+                        cooking up <span class="text-brand-red font-semibold">clavira</span> · prev
+                        <a href="#" class="text-gray-500 border-b border-gray-300 hover:text-brand-red hover:border-brand-red transition-colors">@stripe</a>
+                        <a href="#" class="text-gray-500 border-b border-gray-300 hover:text-brand-red hover:border-brand-red transition-colors">@figma</a>
+                        <a href="#" class="text-gray-500 border-b border-gray-300 hover:text-brand-red hover:border-brand-red transition-colors">@notion</a>
+                    </p>
+
+                    <div class="mt-8 flex">
+                        <a href="https://x.com/troyschll" target="_blank" rel="noopener" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 transition-colors font-medium text-sm px-4 py-2 rounded-full inline-flex items-center gap-2">
+                            Read mid tweets
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+                                <path d="M3 8L8 3M8 3H4M8 3v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. Photo Card with Logo (click to cycle) -->
+                <div id="photo-card" class="bento-card relative h-[280px] group cursor-pointer overflow-hidden bg-[#1a1a1d]" role="button" aria-label="Next photo">
+                    <!-- Blurred backdrop (matches current photo, fills letterbox space for portrait images) -->
+                    <div data-photo-bg class="absolute inset-0 bg-cover bg-center" style="filter: blur(24px) saturate(120%); transform: scale(1.2);"></div>
+                    <!-- Subtle dim over backdrop -->
+                    <div class="absolute inset-0 bg-black/15 pointer-events-none"></div>
+
+                    <!-- Main image -->
+                    <img data-photo class="absolute inset-0 w-full h-full transition-transform duration-700 ease-out group-hover:scale-105" alt="">
+
+                    <!-- Prev chevron (hover) -->
+                    <button data-photo-prev type="button" aria-label="Previous photo"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/85 backdrop-blur shadow-md flex items-center justify-center text-gray-900 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
+                        <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                            <path d="M7.5 2.5L4 6l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <!-- Next chevron (hover) -->
+                    <button data-photo-next type="button" aria-label="Next photo"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/85 backdrop-blur shadow-md flex items-center justify-center text-gray-900 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
+                        <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                            <path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+
+                    <!-- Dots indicator -->
+                    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none" data-photo-dots></div>
+
+                    <!-- Apple Photos app icon -->
+                    <img src="https://cdn.prod.website-files.com/62c89bdb7c26b515f632de67/630d832176e726efcbad3972_Photos-min.webp" alt="Photos" class="absolute bottom-6 right-6 w-14 h-14 rounded-[16px] shadow-float pointer-events-none">
+                </div>
+
+                <!-- 4. Contact Card -->
+                <div class="bento-card bg-white p-8 flex flex-col gap-5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10.5px] font-extrabold tracking-[0.1em] text-gray-400 uppercase">Get in touch</span>
+                        <span class="text-[11px] text-gray-500 inline-flex items-center gap-1.5">
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+                            usually reply within a day
+                        </span>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[22px] font-bold tracking-tight text-gray-900 leading-tight">Let's talk.</h3>
+                        <p class="text-[14px] text-gray-500 mt-1.5 leading-relaxed">Working on something interesting? Want to chat about Clavira, design, or anything else — drop me a line.</p>
+                    </div>
+
+                    <!-- CTA -->
+                    <button type="button" data-open-contact
+                        class="w-full bg-gradient-to-b from-[#FF4E45] to-[#E6352C] hover:from-[#FF5D54] hover:to-[#F13C33] text-white rounded-2xl p-4 flex items-center justify-between shadow-[0_8px_20px_-6px_rgba(255,59,48,0.4)] transition-all transform active:scale-[0.98]">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                <i class="ph-fill ph-envelope text-lg"></i>
+                            </div>
+                            <span class="font-bold text-base">Send a message</span>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M4 12L12 4M12 4H6M12 4v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+
+                    <!-- Secondary action -->
+                    <a href="mailto:troysatchell@gmail.com" class="flex items-center gap-3 px-3 py-2.5 -mx-1 rounded-xl hover:bg-black/5 transition-colors text-gray-500 hover:text-gray-700">
+                        <i class="ph ph-copy text-lg"></i>
+                        <span class="font-medium text-sm">or email troysatchell@gmail.com directly</span>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Keyframe Animations handled via Tailwind Arbitrary Values where possible,
+         but we'll add shimmer definition here -->
+    <style>
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        .mask-fade-r {
+            -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+            mask-image: linear-gradient(to right, black 80%, transparent 100%);
+        }
+    </style>
+
+    <!-- Contact modal -->
+    <div id="contact-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
+        <div class="absolute inset-0 bg-black/45" style="backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);" data-close-contact></div>
+        <div class="relative w-full max-w-[460px] bg-white rounded-3xl shadow-2xl p-7 transform transition-all">
+            <button type="button" data-close-contact aria-label="Close" class="absolute top-4 right-4 w-9 h-9 rounded-full hover:bg-black/5 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <div class="mb-5">
+                <span class="text-[10.5px] font-extrabold tracking-[0.1em] text-gray-400 uppercase">Get in touch</span>
+                <h2 id="contact-modal-title" class="text-[22px] font-bold tracking-tight text-gray-900 leading-tight mt-1">Send Troy a message</h2>
+                <p class="text-[13.5px] text-gray-500 mt-1.5">Hits my inbox at <span class="font-medium text-gray-700">troysatchell@gmail.com</span>.</p>
+            </div>
+            <form id="contact-form" class="flex flex-col gap-3">
+                <input name="name" type="text" required placeholder="Your name"
+                    class="px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/30 focus:border-brand-red transition">
+                <input name="email" type="email" required placeholder="Your email"
+                    class="px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/30 focus:border-brand-red transition">
+                <textarea name="message" required rows="4" placeholder="What's on your mind?"
+                    class="px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/30 focus:border-brand-red transition resize-none"></textarea>
+                <button type="submit"
+                    class="mt-2 w-full bg-gradient-to-b from-[#FF4E45] to-[#E6352C] hover:from-[#FF5D54] hover:to-[#F13C33] text-white rounded-2xl p-3.5 flex items-center justify-center gap-2 shadow-[0_8px_20px_-6px_rgba(255,59,48,0.4)] transition-all transform active:scale-[0.98]">
+                    <span class="font-bold text-[14.5px]">Send message</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <p class="text-[11px] text-gray-400 text-center mt-1">Opens your mail app with the message pre-filled.</p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const glow = document.getElementById('cursor-glow');
+            if (!glow) return;
+            let raf = null;
+            window.addEventListener('pointermove', (e) => {
+                if (raf) return;
+                raf = requestAnimationFrame(() => {
+                    glow.style.left = e.clientX + 'px';
+                    glow.style.top  = e.clientY + 'px';
+                    raf = null;
+                });
+            });
+        })();
+
+        // Contact modal — open, close (×, backdrop, Escape), mailto: submit
+        (function () {
+            const modal = document.getElementById('contact-modal');
+            const form  = document.getElementById('contact-form');
+            if (!modal || !form) return;
+            const openers = document.querySelectorAll('[data-open-contact]');
+            const closers = modal.querySelectorAll('[data-close-contact]');
+            const TO = 'troysatchell@gmail.com';
+
+            function open() {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                requestAnimationFrame(() => modal.querySelector('input[name="name"]').focus());
+                document.body.style.overflow = 'hidden';
+            }
+            function close() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+
+            openers.forEach(b => b.addEventListener('click', open));
+            closers.forEach(b => b.addEventListener('click', close));
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+            });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const fd = new FormData(form);
+                const name    = (fd.get('name')    || '').toString().trim();
+                const email   = (fd.get('email')   || '').toString().trim();
+                const message = (fd.get('message') || '').toString().trim();
+                const subject = encodeURIComponent(`Hi from ${name}`);
+                const body    = encodeURIComponent(`${message}\n\n— ${name} (${email})`);
+                window.location.href = `mailto:${TO}?subject=${subject}&body=${body}`;
+                close();
+                form.reset();
+            });
+        })();
+
+        // Photo card — click / chevrons to cycle, dots indicator, portrait-aware scaling
+        (function () {
+            const card = document.getElementById('photo-card');
+            if (!card) return;
+            const img   = card.querySelector('[data-photo]');
+            const bg    = card.querySelector('[data-photo-bg]');
+            const dots  = card.querySelector('[data-photo-dots]');
+            const prev  = card.querySelector('[data-photo-prev]');
+            const next  = card.querySelector('[data-photo-next]');
+            const photos = [
+                './screenshots/PhotosComponent/1778843501331.jpeg',
+                './screenshots/PhotosComponent/670369086_18001018928918986_1715362502572191777_n.jpg',
+                './screenshots/PhotosComponent/ClaviraBGMAC.jpg',
+                './screenshots/PhotosComponent/IMG_0080.JPG',
+                './screenshots/PhotosComponent/IMG_0089.jpeg',
+                './screenshots/PhotosComponent/IMG_0098.jpeg',
+                './screenshots/PhotosComponent/IMG_2445.jpg'
+            ];
+            let i = 0;
+
+            // Build dots once (array-driven from photos)
+            dots.innerHTML = photos.map((_, k) =>
+                `<span data-dot="${k}" class="block w-1.5 h-1.5 rounded-full bg-white transition-all"></span>`
+            ).join('');
+            const dotEls = Array.from(dots.querySelectorAll('[data-dot]'));
+
+            function show() {
+                img.src = photos[i];
+                bg.style.backgroundImage = `url("${photos[i]}")`;
+                img.onload = () => {
+                    const portrait = img.naturalHeight > img.naturalWidth;
+                    img.style.objectFit = portrait ? 'contain' : 'cover';
+                    img.style.objectPosition = 'center';
+                };
+                dotEls.forEach((d, k) => {
+                    d.className = 'block h-1.5 rounded-full bg-white transition-all ' +
+                        (k === i ? 'w-4 opacity-100' : 'w-1.5 opacity-50');
+                });
+            }
+
+            function go(delta) { i = (i + delta + photos.length) % photos.length; show(); }
+            card.addEventListener('click', () => go(1));
+            prev.addEventListener('click', (e) => { e.stopPropagation(); go(-1); });
+            next.addEventListener('click', (e) => { e.stopPropagation(); go(1); });
+            show();
+        })();
+
+        // Selected-work: chevrons cycle which cluster is active; hover-peek is pure CSS
+        (function () {
+            const sw = document.getElementById('selected-work');
+            if (!sw) return;
+            const nameEl    = sw.querySelector('[data-deck-name]');
+            const tagEl     = sw.querySelector('[data-deck-tag]');
+            const counterEl = sw.querySelector('[data-deck-counter]');
+            const prev      = sw.querySelector('[data-deck-prev]');
+            const next      = sw.querySelector('[data-deck-next]');
+            const clusters  = Array.from(sw.querySelectorAll('.peek-cluster'));
+            if (!clusters.length) return;
+            const meta = {
+                viavienna: { name: 'ViaVienna', tag: 'co-writing for trips' },
+                clavira:   { name: 'Clavira',   tag: 'biometrics for people' }
+            };
+            let idx = 0;
+            function render() {
+                clusters.forEach((c, i) => c.classList.toggle('is-active', i === idx));
+                const key = clusters[idx].dataset.project;
+                const m = meta[key] || { name: key, tag: '' };
+                nameEl.textContent = m.name;
+                tagEl.textContent  = m.tag;
+                if (counterEl) {
+                    counterEl.textContent =
+                        String(idx + 1).padStart(2, '0') + ' / ' + String(clusters.length).padStart(2, '0');
+                }
+            }
+            prev.addEventListener('click', () => { idx = (idx - 1 + clusters.length) % clusters.length; render(); });
+            next.addEventListener('click', () => { idx = (idx + 1) % clusters.length; render(); });
+            render();
+        })();
+    </script>
+
+</body>
+</html>
